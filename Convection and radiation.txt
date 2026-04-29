@@ -1,0 +1,88 @@
+On Scilab
+
+clear;
+clc;
+
+// Variáveis
+L = 1.0;
+Nx = 20;
+Ny = 20;
+dx = L/(Nx-1);
+dy = L/(Ny-1);
+k = 10;
+h = 25;
+T_inf = 300;
+Tf = 400;
+Tmax = 500;
+q = 1000;
+
+tol = 1e-6;  
+// vai determinar o erro máximo admitido pelo programa
+erro = 1;
+max_iter = 10000;
+
+//Para criar a matriz 
+T = Tf * ones(Nx, Ny);
+
+iter = 0;
+
+while (erro > tol & iter < max_iter)
+
+    T_old = T;
+
+    for i = 1:Nx
+        for j = 1:Ny
+
+            //Face Esquerda (direto)
+
+            if (i == 1) then
+                T(i,j) = Tf;
+
+            // Borda superior 
+
+            elseif (j == Ny) then
+                x = (i-1)*dx;
+                T(i,j) = Tf + sin(%pi*x/L)*(Tmax - Tf);
+
+            // face Direita (fluxo)
+
+            elseif (i == Nx & j <> 1) then
+ 	//Nesse caso usei o & para testar duas condições simultaneamente.
+                T(i,j) = ( 2*T(i-1,j) + T(i,j+1) + T(i,j-1) + 2*q*dx/k ) / 4;
+
+            // Base (convecção)
+
+            elseif (j == 1 & i <> Nx) then
+                T(i,j) = ( 2*T(i,j+1) + T(i+1,j) + T(i-1,j) + 2*h*dy*T_inf/k ) / (4 + 2*h*dy/k);
+
+            // Canto Inferior Direito (convecção + fluxo)
+        
+            elseif (i == Nx & j == 1) then
+                T(i,j) = ( T(i-1,j) + T(i,j+1) + (h*dy/k)*T_inf +  (q*dx/k) ) / (2 + h*dy/k);
+
+            // Pontos Internos
+
+            else
+                T(i,j) = 0.25 * ( T(i+1,j) + T(i-1,j) + T(i,j+1) + T(i,j-1) );
+            end
+
+        end
+    end
+
+    erro = max(max(abs(T - T_old)));
+    iter = iter + 1;
+
+end
+
+disp("Iterações: " + string(iter));
+disp("Erro final: " + string(erro));
+
+// Plot aqui vai ser criado o gráfico (caso de erro só trocar pelo que o professor utilizou no teams e ajustar as variáveis com as que eu criei)
+
+x = linspace(0, L, Nx);
+y = linspace(0, L, Ny);
+
+clf;
+contourf(x, y, T');
+colorbar();
+xtitle("Distribuição de Temperatura", "x", "y")
